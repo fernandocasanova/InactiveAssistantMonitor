@@ -12,7 +12,7 @@ namespace InactiveAssistantMonitor.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "15.9.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "16.6.0.0")]
     internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
@@ -49,7 +49,7 @@ namespace InactiveAssistantMonitor.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Program Files (x86)\\UiPath\\Studio\\UiPathAssistant\\UiPath.Assistant.exe")]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Program Files (x86)\\UiPath\\Studio\\")]
         public string UiPathAssistantPath {
             get {
                 return ((string)(this["UiPathAssistantPath"]));
@@ -68,6 +68,78 @@ namespace InactiveAssistantMonitor.Properties {
             }
             set {
                 this["UiPathProcessRegexp"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("30")]
+        public int NumberOfChecksOfOrchestrator {
+            get {
+                return ((int)(this["NumberOfChecksOfOrchestrator"]));
+            }
+            set {
+                this["NumberOfChecksOfOrchestrator"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("10")]
+        public int PeriodIntervalConnectionToOrchestrator {
+            get {
+                return ((int)(this["PeriodIntervalConnectionToOrchestrator"]));
+            }
+            set {
+                this["PeriodIntervalConnectionToOrchestrator"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://tam-orchestrator.rpatam.com/")]
+        public string OrchestratorUrl {
+            get {
+                return ((string)(this["OrchestratorUrl"]));
+            }
+            set {
+                this["OrchestratorUrl"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("12345678-AAAA-FFFF-AAAA-7C40390069CE")]
+        public string MachineKey {
+            get {
+                return ((string)(this["MachineKey"]));
+            }
+            set {
+                this["MachineKey"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("UiPathAssistant\\UiPath.Assistant.exe")]
+        public string UiPathAssistantExe {
+            get {
+                return ((string)(this["UiPathAssistantExe"]));
+            }
+            set {
+                this["UiPathAssistantExe"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("UiRobot.exe")]
+        public string UiPathRobot {
+            get {
+                return ((string)(this["UiPathRobot"]));
+            }
+            set {
+                this["UiPathRobot"] = value;
             }
         }
     }

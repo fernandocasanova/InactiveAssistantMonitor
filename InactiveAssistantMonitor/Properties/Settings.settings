@@ -9,10 +9,28 @@
       <Value Profile="(Default)">20</Value>
     </Setting>
     <Setting Name="UiPathAssistantPath" Type="System.String" Scope="User">
-      <Value Profile="(Default)">C:\Program Files (x86)\UiPath\Studio\UiPathAssistant\UiPath.Assistant.exe</Value>
+      <Value Profile="(Default)">C:\Program Files (x86)\UiPath\Studio\</Value>
     </Setting>
     <Setting Name="UiPathProcessRegexp" Type="System.String" Scope="User">
       <Value Profile="(Default)">^(UiPath\..+)$</Value>
+    </Setting>
+    <Setting Name="NumberOfChecksOfOrchestrator" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">30</Value>
+    </Setting>
+    <Setting Name="PeriodIntervalConnectionToOrchestrator" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">10</Value>
+    </Setting>
+    <Setting Name="OrchestratorUrl" Type="System.String" Scope="User">
+      <Value Profile="(Default)">https://tam-orchestrator.rpatam.com/</Value>
+    </Setting>
+    <Setting Name="MachineKey" Type="System.String" Scope="User">
+      <Value Profile="(Default)">12345678-AAAA-FFFF-AAAA-7C40390069CE</Value>
+    </Setting>
+    <Setting Name="UiPathAssistantExe" Type="System.String" Scope="User">
+      <Value Profile="(Default)">UiPathAssistant\UiPath.Assistant.exe</Value>
+    </Setting>
+    <Setting Name="UiPathRobot" Type="System.String" Scope="User">
+      <Value Profile="(Default)">UiRobot.exe</Value>
     </Setting>
   </Settings>
 </SettingsFile>
