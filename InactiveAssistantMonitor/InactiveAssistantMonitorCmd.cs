@@ -17,6 +17,7 @@ namespace InactiveAssistantMonitor
         int originalSessionId;
         int countInactive;
         bool killedAssistant;
+        string studioPath;
 
         int countOrchestratorConnectivityAttemps;
 
@@ -24,47 +25,73 @@ namespace InactiveAssistantMonitor
 
         public InactiveAssistantMonitorCmd()
         {
-            notifyIcon.Text = "Inactive UiPath Assistant Monitor";
-
-            MenuItem connectAssistantMenuItem = new MenuItem("Connect Assistant to Orchestrator", new EventHandler(ConnectAssistantEH));
-            MenuItem startAssistantMenuItem = new MenuItem("Start UiPath Assistant", new EventHandler(StartAssistantEH));
-            MenuItem closeAssistantMenuItem = new MenuItem("Close UiPath Assistant", new EventHandler(KillAssistantEH));
-            MenuItem exitMenuItem = new MenuItem("Exit", new EventHandler(ExitEH));
-
-            this.killedAssistant = false;
-
-            var inactivePeriodTimeSpan = TimeSpan.FromSeconds(Properties.Settings.Default.PeriodIntervalInSeconds);
-            var orchestratorInterval = Properties.Settings.Default.PeriodIntervalConnectionToOrchestrator;
-
-            using (Process CurrentProcess = Process.GetCurrentProcess())
+            this.studioPath = "";
+            if (System.IO.Directory.Exists(Properties.Settings.Default.UiPathAssistantPathX86.Trim('\\')))
             {
-                this.originalSessionId = CurrentProcess.SessionId;
+                this.studioPath = Properties.Settings.Default.UiPathAssistantPathX86.Trim('\\');
             }
-
-            var timerInactiveProcess = new System.Threading.Timer((e) =>
+            else
             {
-                CheckProcessRunnning();
-            }, null, inactivePeriodTimeSpan, inactivePeriodTimeSpan);
+                if (System.IO.Directory.Exists(Properties.Settings.Default.UiPathAssistantPath.Trim('\\')))
+                {
+                    this.studioPath = Properties.Settings.Default.UiPathAssistantPath.Trim('\\');
+                }
+            }
+            if (String.IsNullOrEmpty(this.studioPath))
+            {
+                MessageBox.Show("UiPath Studio was not found. Please install it before you run this program.", "UiPath Studio not found!", MessageBoxButtons.OK, MessageBoxIcon.Error, MessageBoxDefaultButton.Button1, MessageBoxOptions.ServiceNotification);
 
-            this.countOrchestratorConnectivityAttemps = 0;
+                var timerInactiveProcess = new System.Threading.Timer((e) =>
+                {
+                    this.Exit();
+                }, null, TimeSpan.FromMilliseconds(250), TimeSpan.FromMilliseconds(250));
 
-            // Create a timer with a two second interval.
-            this.timerOrchestratorConnectivity = new System.Timers.Timer(1000.0 * orchestratorInterval);
-            // Hook up the Elapsed event for the timer. 
-            this.timerOrchestratorConnectivity.Elapsed += checkConnectivityToOrchestrator;
-            this.timerOrchestratorConnectivity.AutoReset = true;
-            this.timerOrchestratorConnectivity.Enabled = true;
+                return;
+            }
+            else
+            {
+                notifyIcon.Text = "Inactive UiPath Assistant Monitor";
 
-            notifyIcon.Icon = InactiveAssistantMonitor.Properties.Resources.AppIcon;
+                MenuItem connectAssistantMenuItem = new MenuItem("Connect Assistant to Orchestrator", new EventHandler(ConnectAssistantEH));
+                MenuItem startAssistantMenuItem = new MenuItem("Start UiPath Assistant", new EventHandler(StartAssistantEH));
+                MenuItem closeAssistantMenuItem = new MenuItem("Close UiPath Assistant", new EventHandler(KillAssistantEH));
+                MenuItem exitMenuItem = new MenuItem("Exit", new EventHandler(ExitEH));
 
-            notifyIcon.DoubleClick += new EventHandler(ShowMessageBox);
-            notifyIcon.ContextMenu = new ContextMenu(new MenuItem[] {
-                connectAssistantMenuItem,
-                startAssistantMenuItem,
-                closeAssistantMenuItem,
-                exitMenuItem
-            });
-            notifyIcon.Visible = true;
+                this.killedAssistant = false;
+
+                var inactivePeriodTimeSpan = TimeSpan.FromSeconds(Properties.Settings.Default.PeriodIntervalInSeconds);
+                var orchestratorInterval = Properties.Settings.Default.PeriodIntervalConnectionToOrchestrator;
+
+                using (Process CurrentProcess = Process.GetCurrentProcess())
+                {
+                    this.originalSessionId = CurrentProcess.SessionId;
+                }
+
+                var timerInactiveProcess = new System.Threading.Timer((e) =>
+                {
+                    CheckProcessRunnning();
+                }, null, inactivePeriodTimeSpan, inactivePeriodTimeSpan);
+
+                this.countOrchestratorConnectivityAttemps = 0;
+
+                // Create a timer with a two second interval.
+                this.timerOrchestratorConnectivity = new System.Timers.Timer(1000.0 * orchestratorInterval);
+                // Hook up the Elapsed event for the timer. 
+                this.timerOrchestratorConnectivity.Elapsed += checkConnectivityToOrchestrator;
+                this.timerOrchestratorConnectivity.AutoReset = true;
+                this.timerOrchestratorConnectivity.Enabled = true;
+
+                notifyIcon.Icon = InactiveAssistantMonitor.Properties.Resources.AppIcon;
+
+                notifyIcon.DoubleClick += new EventHandler(ShowMessageBox);
+                notifyIcon.ContextMenu = new ContextMenu(new MenuItem[] {
+                    connectAssistantMenuItem,
+                    startAssistantMenuItem,
+                    closeAssistantMenuItem,
+                    exitMenuItem
+                });
+                notifyIcon.Visible = true;
+            }
         }
 
         private void CheckProcessRunnning()
@@ -119,7 +146,7 @@ namespace InactiveAssistantMonitor
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.CreateNoWindow = true;
 
-            process.StartInfo.FileName = Properties.Settings.Default.UiPathAssistantPath.Trim('\\') + "\\" + 
+            process.StartInfo.FileName = this.studioPath + "\\" + 
                                          Properties.Settings.Default.UiPathAssistantExe;
 
             process.Start();
@@ -184,7 +211,7 @@ namespace InactiveAssistantMonitor
             disconnectProcess.StartInfo.UseShellExecute = false;
             disconnectProcess.StartInfo.CreateNoWindow = true;
 
-            disconnectProcess.StartInfo.FileName = Properties.Settings.Default.UiPathAssistantPath.Trim('\\') + "\\" +
+            disconnectProcess.StartInfo.FileName = this.studioPath + "\\" +
                                          Properties.Settings.Default.UiPathRobot;
             disconnectProcess.StartInfo.Arguments = "disconnect";
 
@@ -197,7 +224,7 @@ namespace InactiveAssistantMonitor
             connectProcess.StartInfo.UseShellExecute = false;
             connectProcess.StartInfo.CreateNoWindow = true;
 
-            connectProcess.StartInfo.FileName = Properties.Settings.Default.UiPathAssistantPath.Trim('\\') + "\\" +
+            connectProcess.StartInfo.FileName = this.studioPath + "\\" +
                                             Properties.Settings.Default.UiPathRobot;
             connectProcess.StartInfo.Arguments = "connect" +
                                             " --url " + Properties.Settings.Default.OrchestratorUrl.Trim('/') +

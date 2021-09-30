@@ -50,12 +50,12 @@ namespace InactiveAssistantMonitor.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("C:\\Program Files (x86)\\UiPath\\Studio\\")]
-        public string UiPathAssistantPath {
+        public string UiPathAssistantPathX86 {
             get {
-                return ((string)(this["UiPathAssistantPath"]));
+                return ((string)(this["UiPathAssistantPathX86"]));
             }
             set {
-                this["UiPathAssistantPath"] = value;
+                this["UiPathAssistantPathX86"] = value;
             }
         }
         
@@ -140,6 +140,18 @@ namespace InactiveAssistantMonitor.Properties {
             }
             set {
                 this["UiPathRobot"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Program Files\\UiPath\\Studio\\")]
+        public string UiPathAssistantPath {
+            get {
+                return ((string)(this["UiPathAssistantPath"]));
+            }
+            set {
+                this["UiPathAssistantPath"] = value;
             }
         }
     }

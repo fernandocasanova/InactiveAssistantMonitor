@@ -8,7 +8,7 @@
     <Setting Name="NumberOfIntervalsUntilKill" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">20</Value>
     </Setting>
-    <Setting Name="UiPathAssistantPath" Type="System.String" Scope="User">
+    <Setting Name="UiPathAssistantPathX86" Type="System.String" Scope="User">
       <Value Profile="(Default)">C:\Program Files (x86)\UiPath\Studio\</Value>
     </Setting>
     <Setting Name="UiPathProcessRegexp" Type="System.String" Scope="User">
@@ -31,6 +31,9 @@
     </Setting>
     <Setting Name="UiPathRobot" Type="System.String" Scope="User">
       <Value Profile="(Default)">UiRobot.exe</Value>
+    </Setting>
+    <Setting Name="UiPathAssistantPath" Type="System.String" Scope="User">
+      <Value Profile="(Default)">C:\Program Files\UiPath\Studio\</Value>
     </Setting>
   </Settings>
 </SettingsFile>
