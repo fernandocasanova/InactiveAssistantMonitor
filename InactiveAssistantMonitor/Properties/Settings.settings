@@ -3,10 +3,10 @@
   <Profiles />
   <Settings>
     <Setting Name="PeriodIntervalInSeconds" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">15</Value>
+      <Value Profile="(Default)">30</Value>
     </Setting>
     <Setting Name="NumberOfIntervalsUntilKill" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">20</Value>
+      <Value Profile="(Default)">10</Value>
     </Setting>
     <Setting Name="UiPathAssistantPathX86" Type="System.String" Scope="User">
       <Value Profile="(Default)">C:\Program Files (x86)\UiPath\Studio\</Value>
@@ -14,17 +14,17 @@
     <Setting Name="UiPathProcessRegexp" Type="System.String" Scope="User">
       <Value Profile="(Default)">^(UiPath\..+)$</Value>
     </Setting>
-    <Setting Name="NumberOfChecksOfOrchestrator" Type="System.Int32" Scope="User">
+    <Setting Name="OffsetChecks" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">30</Value>
     </Setting>
     <Setting Name="PeriodIntervalConnectionToOrchestrator" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">10</Value>
+      <Value Profile="(Default)">30</Value>
     </Setting>
     <Setting Name="OrchestratorUrl" Type="System.String" Scope="User">
-      <Value Profile="(Default)">https://tam-orchestrator.rpatam.com/</Value>
+      <Value Profile="(Default)">https://staging.uipath.com/benefittrackingdemo/DefaultTenant/orchestrator_/</Value>
     </Setting>
     <Setting Name="MachineKey" Type="System.String" Scope="User">
-      <Value Profile="(Default)">12345678-AAAA-FFFF-AAAA-7C40390069CE</Value>
+      <Value Profile="(Default)">5b6c6f95-6fac-402f-95bc-346db133887e</Value>
     </Setting>
     <Setting Name="UiPathAssistantExe" Type="System.String" Scope="User">
       <Value Profile="(Default)">UiPathAssistant\UiPath.Assistant.exe</Value>

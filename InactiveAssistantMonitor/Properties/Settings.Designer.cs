@@ -25,7 +25,7 @@ namespace InactiveAssistantMonitor.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("15")]
+        [global::System.Configuration.DefaultSettingValueAttribute("30")]
         public int PeriodIntervalInSeconds {
             get {
                 return ((int)(this["PeriodIntervalInSeconds"]));
@@ -37,7 +37,7 @@ namespace InactiveAssistantMonitor.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("20")]
+        [global::System.Configuration.DefaultSettingValueAttribute("10")]
         public int NumberOfIntervalsUntilKill {
             get {
                 return ((int)(this["NumberOfIntervalsUntilKill"]));
@@ -74,18 +74,18 @@ namespace InactiveAssistantMonitor.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("30")]
-        public int NumberOfChecksOfOrchestrator {
+        public int OffsetChecks {
             get {
-                return ((int)(this["NumberOfChecksOfOrchestrator"]));
+                return ((int)(this["OffsetChecks"]));
             }
             set {
-                this["NumberOfChecksOfOrchestrator"] = value;
+                this["OffsetChecks"] = value;
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("10")]
+        [global::System.Configuration.DefaultSettingValueAttribute("30")]
         public int PeriodIntervalConnectionToOrchestrator {
             get {
                 return ((int)(this["PeriodIntervalConnectionToOrchestrator"]));
@@ -97,7 +97,7 @@ namespace InactiveAssistantMonitor.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("https://tam-orchestrator.rpatam.com/")]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://staging.uipath.com/benefittrackingdemo/DefaultTenant/orchestrator_/")]
         public string OrchestratorUrl {
             get {
                 return ((string)(this["OrchestratorUrl"]));
@@ -109,7 +109,7 @@ namespace InactiveAssistantMonitor.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("12345678-AAAA-FFFF-AAAA-7C40390069CE")]
+        [global::System.Configuration.DefaultSettingValueAttribute("5b6c6f95-6fac-402f-95bc-346db133887e")]
         public string MachineKey {
             get {
                 return ((string)(this["MachineKey"]));

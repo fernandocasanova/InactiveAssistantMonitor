@@ -14,17 +14,16 @@ namespace InactiveAssistantMonitor
     {
         NotifyIcon notifyIcon = new NotifyIcon();
 
-        int originalSessionId;
         int countInactive;
-        bool killedAssistant;
         string studioPath;
 
-        int countOrchestratorConnectivityAttemps;
-
         System.Timers.Timer timerOrchestratorConnectivity;
+        System.Timers.Timer timerInactiveProcess;
 
         public InactiveAssistantMonitorCmd()
         {
+            FileManager.Instance.Log("InactiveAssistantMonitorCmd started...");
+
             this.studioPath = "";
             if (System.IO.Directory.Exists(Properties.Settings.Default.UiPathAssistantPathX86.Trim('\\')))
             {
@@ -39,12 +38,13 @@ namespace InactiveAssistantMonitor
             }
             if (String.IsNullOrEmpty(this.studioPath))
             {
+                FileManager.Instance.Log("UiPath Studio was not found. Please install it before you run this program.");
                 MessageBox.Show("UiPath Studio was not found. Please install it before you run this program.", "UiPath Studio not found!", MessageBoxButtons.OK, MessageBoxIcon.Error, MessageBoxDefaultButton.Button1, MessageBoxOptions.ServiceNotification);
 
                 var timerInactiveProcess = new System.Threading.Timer((e) =>
                 {
                     this.Exit();
-                }, null, TimeSpan.FromMilliseconds(250), TimeSpan.FromMilliseconds(250));
+                }, null, TimeSpan.FromMilliseconds(250), TimeSpan.FromMilliseconds(-1));
 
                 return;
             }
@@ -57,33 +57,22 @@ namespace InactiveAssistantMonitor
                 MenuItem closeAssistantMenuItem = new MenuItem("Close UiPath Assistant", new EventHandler(KillAssistantEH));
                 MenuItem exitMenuItem = new MenuItem("Exit", new EventHandler(ExitEH));
 
-                this.killedAssistant = false;
+                this.timerInactiveProcess = new System.Timers.Timer(1000.0 * Properties.Settings.Default.PeriodIntervalInSeconds);
+                this.timerInactiveProcess.Elapsed += CheckProcessRunnningEH;
+                this.timerInactiveProcess.AutoReset = true;
+                this.timerInactiveProcess.Start();
 
-                var inactivePeriodTimeSpan = TimeSpan.FromSeconds(Properties.Settings.Default.PeriodIntervalInSeconds);
-                var orchestratorInterval = Properties.Settings.Default.PeriodIntervalConnectionToOrchestrator;
-
-                using (Process CurrentProcess = Process.GetCurrentProcess())
-                {
-                    this.originalSessionId = CurrentProcess.SessionId;
-                }
-
-                var timerInactiveProcess = new System.Threading.Timer((e) =>
-                {
-                    CheckProcessRunnning();
-                }, null, inactivePeriodTimeSpan, inactivePeriodTimeSpan);
-
-                this.countOrchestratorConnectivityAttemps = 0;
-
-                // Create a timer with a two second interval.
-                this.timerOrchestratorConnectivity = new System.Timers.Timer(1000.0 * orchestratorInterval);
-                // Hook up the Elapsed event for the timer. 
-                this.timerOrchestratorConnectivity.Elapsed += checkConnectivityToOrchestrator;
+                this.timerOrchestratorConnectivity = new System.Timers.Timer(1000.0 * Properties.Settings.Default.PeriodIntervalConnectionToOrchestrator);
+                this.timerOrchestratorConnectivity.Elapsed += checkConnectivityToOrchestratorEH;
                 this.timerOrchestratorConnectivity.AutoReset = true;
-                this.timerOrchestratorConnectivity.Enabled = true;
+                var delayedStart = new System.Threading.Timer((e) =>
+                {
+                    this.timerOrchestratorConnectivity.Start();
+                }, null, TimeSpan.FromSeconds(Properties.Settings.Default.OffsetChecks), TimeSpan.FromMilliseconds(-1));
 
                 notifyIcon.Icon = InactiveAssistantMonitor.Properties.Resources.AppIcon;
 
-                notifyIcon.DoubleClick += new EventHandler(ShowMessageBox);
+                notifyIcon.DoubleClick += ShowMessageBoxEH;
                 notifyIcon.ContextMenu = new ContextMenu(new MenuItem[] {
                     connectAssistantMenuItem,
                     startAssistantMenuItem,
@@ -96,6 +85,10 @@ namespace InactiveAssistantMonitor
 
         private void CheckProcessRunnning()
         {
+            FileManager.Instance.Log("CheckProcessRunnning started...");
+
+            Process thisProcess = Process.GetCurrentProcess();
+
             ITerminalServicesManager manager = new TerminalServicesManager();
             using (ITerminalServer server = manager.GetLocalServer())
             {
@@ -105,30 +98,33 @@ namespace InactiveAssistantMonitor
                 {
                     if (session.SessionId != 0)
                     {
-                        if (session.SessionId == this.originalSessionId)
+                        if (session.SessionId == thisProcess.SessionId)
                         {
                             if (session.ConnectionState == ConnectionState.Active)
                             {
-                                this.countInactive = 0;
-                                if(this.killedAssistant)
+                                FileManager.Instance.Log("> Session active...");
+
+                                if (!this.IsAssistantOn())
                                 {
                                     this.StartAssistant();
-                                    this.killedAssistant = false;
                                 }
+                                this.countInactive = 1;
                             }
                             else
                             {
-                                if (this.countInactive > Properties.Settings.Default.NumberOfIntervalsUntilKill)
+                                FileManager.Instance.Log("> Session inactive...");
+
+                                if (this.IsAssistantOn())
                                 {
-                                    if(!this.killedAssistant)
+                                    if (this.countInactive > Properties.Settings.Default.NumberOfIntervalsUntilKill)
                                     {
                                         this.KillAssistant();
-                                        this.killedAssistant = true;
                                     }
-                                }
-                                else
-                                {
-                                    this.countInactive++;
+                                    else
+                                    {
+                                        FileManager.Instance.Log("> Assistant in inactive session. countInactive: " + countInactive.ToString());
+                                        this.countInactive++;
+                                    }
                                 }
                             }
                         }
@@ -136,6 +132,18 @@ namespace InactiveAssistantMonitor
                 }
             }
 
+        }
+
+        private void CheckProcessRunnningEH(object sender, EventArgs e)
+        {
+            try
+            {
+                this.CheckProcessRunnning();
+            }
+            catch(Exception ex)
+            {
+                FileManager.Instance.Log("!! Exception: " + ex.Message);
+            }
         }
 
         private void StartAssistant()
@@ -150,20 +158,50 @@ namespace InactiveAssistantMonitor
                                          Properties.Settings.Default.UiPathAssistantExe;
 
             process.Start();
+            process.WaitForExit();
+
+            FileManager.Instance.Log("> Assistant started!");
         }
 
         private void StartAssistantEH(object sender, EventArgs e)
         {
-            this.StartAssistant();
-            this.killedAssistant = false;
+            try 
+            {
+                this.StartAssistant();
+            }
+            catch(Exception ex)
+            {
+                FileManager.Instance.Log("!! Exception: " + ex.Message);
+            }
+        }
+
+        private bool IsAssistantOn()
+        {
+            Process[] runningProcesses = Process.GetProcesses();
+            Process thisProcess = Process.GetCurrentProcess();
+            
+            Process[] sameAsOriginalSession =
+                runningProcesses.Where(p => p.SessionId == thisProcess.SessionId).ToArray();
+
+            foreach (var p in sameAsOriginalSession)
+            {
+                if (p.ProcessName == "UiPath.Assistant")
+                {
+                    FileManager.Instance.Log("> Assistant is ON");
+                    return true;
+                }
+            }
+            FileManager.Instance.Log("> Assistant is OFF");
+            return false;
         }
 
         private void KillAssistant()
         {
             Process[] runningProcesses = Process.GetProcesses();
+            Process thisProcess = Process.GetCurrentProcess();
 
             Process[] sameAsOriginalSession =
-                runningProcesses.Where(p => p.SessionId == this.originalSessionId).ToArray();
+                runningProcesses.Where(p => p.SessionId == thisProcess.SessionId).ToArray();
 
             foreach (var p in sameAsOriginalSession)
             {
@@ -172,39 +210,26 @@ namespace InactiveAssistantMonitor
                     p.Kill();
                 }
             }
+            FileManager.Instance.Log("> Assistant Killed!");
         }
 
         private void KillAssistantEH(object sender, EventArgs e)
         {
-            this.KillAssistant();
-        }
-
-
-        private bool hasConnectivityToOrchestrator()
-        {
-            HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(Properties.Settings.Default.OrchestratorUrl.Trim('/') + "/api/Status/Get");
-            request.Headers.Add("UserAgent", "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1)");
-            request.AllowAutoRedirect = false;
-            
             try
             {
-                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-
-                if(response.StatusCode == HttpStatusCode.OK)
-                {
-                    return true;
-                }
+                this.KillAssistant();
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
+                FileManager.Instance.Log("!! Exception: " + ex.Message);
             }
-
-            return false;
         }
+
 
         private void DisconnectAndConnectRobot()
         {
             // Disconnect
+            FileManager.Instance.Log("> Disconnect robot");
             Process disconnectProcess = new Process();
             disconnectProcess.StartInfo.RedirectStandardOutput = true;
             disconnectProcess.StartInfo.RedirectStandardError = true;
@@ -216,8 +241,10 @@ namespace InactiveAssistantMonitor
             disconnectProcess.StartInfo.Arguments = "disconnect";
 
             disconnectProcess.Start();
+            disconnectProcess.WaitForExit();
 
             // Connect
+            FileManager.Instance.Log("> Connect robot");
             Process connectProcess = new Process();
             connectProcess.StartInfo.RedirectStandardOutput = true;
             connectProcess.StartInfo.RedirectStandardError = true;
@@ -231,41 +258,82 @@ namespace InactiveAssistantMonitor
                                             " --key " + Properties.Settings.Default.MachineKey;
 
             connectProcess.Start();
+            connectProcess.WaitForExit();
+
+            FileManager.Instance.Log("> Robot connected!");
         }
 
-        private void checkConnectivityToOrchestrator(object sender, ElapsedEventArgs e)
+        private bool hasConnectivityToOrchestrator()
         {
-            this.countOrchestratorConnectivityAttemps++;
+            HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(Properties.Settings.Default.OrchestratorUrl.Trim('/') + "/api/Status/Get");
+            request.Headers.Add("UserAgent", "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1)");
+            request.AllowAutoRedirect = false;
 
-            if (this.countOrchestratorConnectivityAttemps >= Properties.Settings.Default.NumberOfChecksOfOrchestrator)
+            try
             {
-                this.timerOrchestratorConnectivity.Stop();
-                this.timerOrchestratorConnectivity.Dispose();
-            }
-            else
-            {
-                if(hasConnectivityToOrchestrator())
+                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+
+                if (response.StatusCode == HttpStatusCode.OK)
                 {
-                    this.DisconnectAndConnectRobot();
-
-                    this.timerOrchestratorConnectivity.Stop();
-                    this.timerOrchestratorConnectivity.Dispose();
+                    FileManager.Instance.Log("> Connectivity OK + Can connect to the Orchestrator");
+                    return true;
                 }
+            }
+            catch (Exception e)
+            {
+            }
+
+            FileManager.Instance.Log("> Connectivity KO - Cannot connect to the Orchestrator");
+            return false;
+        }
+
+        private void checkConnectivityToOrchestratorEH(object sender, ElapsedEventArgs e)
+        {
+            try
+            {
+                FileManager.Instance.Log("checkConnectivityToOrchestratorEH started... ");
+
+                if (RobotClientMgr.Instance.IsRobotConnectedToOrchestrator())
+                {
+                    FileManager.Instance.Log("> RobotConnectedToOrchestrator: True");
+                }
+                else
+                {
+                    FileManager.Instance.Log("> RobotConnectedToOrchestrator: False");
+
+                    if (this.hasConnectivityToOrchestrator())
+                    {
+                        this.DisconnectAndConnectRobot();
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                FileManager.Instance.Log("!! Exception: " + ex.Message);
             }
         }
 
         private void ConnectAssistantEH(object sender, EventArgs e)
         {
-            this.DisconnectAndConnectRobot();
+            try
+            {
+                this.DisconnectAndConnectRobot();
+            }
+            catch(Exception ex)
+            {
+                FileManager.Instance.Log("!! Exception: " + ex.Message);
+            }
         }
 
-        private void ShowMessageBox(object sender, EventArgs e)
+        private void ShowMessageBoxEH(object sender, EventArgs e)
         {
             MessageBox.Show("This program stops the UiPath Assistant when not in use and restarts it when in use.", "About InactiveAssistantMonitor", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void Exit()
         {
+            FileManager.Instance.Log("Exiting...");
             // We must manually tidy up and remove the icon before we exit.
             // Otherwise it will be left behind until the user mouses over.
             notifyIcon.Visible = false;
