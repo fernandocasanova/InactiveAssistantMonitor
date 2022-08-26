@@ -11,9 +11,6 @@
     <Setting Name="UiPathAssistantPathX86" Type="System.String" Scope="User">
       <Value Profile="(Default)">C:\Program Files (x86)\UiPath\Studio\</Value>
     </Setting>
-    <Setting Name="UiPathProcessRegexp" Type="System.String" Scope="User">
-      <Value Profile="(Default)">^(UiPath\..+)$</Value>
-    </Setting>
     <Setting Name="OffsetChecks" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">15</Value>
     </Setting>

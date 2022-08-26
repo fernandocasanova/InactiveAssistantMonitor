@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Timers;
+using System.Threading;
 
 namespace InactiveAssistantMonitor
 {
@@ -36,6 +37,7 @@ namespace InactiveAssistantMonitor
                     this.studioPath = Properties.Settings.Default.UiPathAssistantPath.Trim('\\');
                 }
             }
+
             if (String.IsNullOrEmpty(this.studioPath))
             {
                 FileManager.Instance.Log("UiPath Studio was not found. Please install it before you run this program.");
@@ -57,18 +59,9 @@ namespace InactiveAssistantMonitor
                 MenuItem closeAssistantMenuItem = new MenuItem("Close UiPath Assistant", new EventHandler(KillAssistantEH));
                 MenuItem exitMenuItem = new MenuItem("Exit", new EventHandler(ExitEH));
 
-                this.timerInactiveProcess = new System.Timers.Timer(1000.0 * Properties.Settings.Default.PeriodIntervalInSeconds);
-                this.timerInactiveProcess.Elapsed += CheckProcessRunnningEH;
-                this.timerInactiveProcess.AutoReset = true;
-                this.timerInactiveProcess.Start();
+                this.startTimerInactiveProcess();
 
-                this.timerOrchestratorConnectivity = new System.Timers.Timer(1000.0 * Properties.Settings.Default.PeriodIntervalConnectionToOrchestrator);
-                this.timerOrchestratorConnectivity.Elapsed += checkConnectivityToOrchestratorEH;
-                this.timerOrchestratorConnectivity.AutoReset = true;
-                var delayedStart = new System.Threading.Timer((e) =>
-                {
-                    this.timerOrchestratorConnectivity.Start();
-                }, null, TimeSpan.FromSeconds(Properties.Settings.Default.OffsetChecks), TimeSpan.FromMilliseconds(-1));
+                this.startTimerOrchestratorConnectivity();
 
                 notifyIcon.Icon = InactiveAssistantMonitor.Properties.Resources.AppIcon;
 
@@ -81,6 +74,43 @@ namespace InactiveAssistantMonitor
                 });
                 notifyIcon.Visible = true;
             }
+        }
+
+        private void startTimerOrchestratorConnectivity()
+        {
+            this.timerOrchestratorConnectivity = new System.Timers.Timer(1000.0 * Properties.Settings.Default.PeriodIntervalConnectionToOrchestrator);
+            this.timerOrchestratorConnectivity.Elapsed += checkConnectivityToOrchestratorEH;
+            this.timerOrchestratorConnectivity.AutoReset = true;
+            var delayedStart = new System.Threading.Timer((e) =>
+            {
+                try
+                {
+                    this.timerOrchestratorConnectivity.Start();
+                }
+                catch(Exception)
+                {
+                }
+            }, null, TimeSpan.FromSeconds(Properties.Settings.Default.OffsetChecks), TimeSpan.FromMilliseconds(-1));
+        }
+
+        private void stopTimerOrchestratorConnectivity()
+        {
+            this.timerOrchestratorConnectivity.Stop();
+            this.timerOrchestratorConnectivity.Dispose();
+        }
+
+        private void startTimerInactiveProcess()
+        {
+            this.timerInactiveProcess = new System.Timers.Timer(1000.0 * Properties.Settings.Default.PeriodIntervalInSeconds);
+            this.timerInactiveProcess.Elapsed += CheckProcessRunnningEH;
+            this.timerInactiveProcess.AutoReset = true;
+            this.timerInactiveProcess.Start();
+        }
+
+        private void stopTimerInactiveProcess()
+        {
+            this.timerInactiveProcess.Stop();
+            this.timerInactiveProcess.Dispose();
         }
 
         private void CheckProcessRunnning()
@@ -158,8 +188,6 @@ namespace InactiveAssistantMonitor
                                          Properties.Settings.Default.UiPathAssistantExe;
 
             process.Start();
-            process.WaitForExit();
-
             FileManager.Instance.Log("> Assistant started!");
         }
 
@@ -168,6 +196,8 @@ namespace InactiveAssistantMonitor
             try 
             {
                 this.StartAssistant();
+                this.startTimerInactiveProcess();
+                this.startTimerOrchestratorConnectivity();
             }
             catch(Exception ex)
             {
@@ -205,7 +235,15 @@ namespace InactiveAssistantMonitor
 
             foreach (var p in sameAsOriginalSession)
             {
-                if (Regex.Match(p.ProcessName, Properties.Settings.Default.UiPathProcessRegexp).Success)
+                if (p.ProcessName == "UiPath.Executor")
+                {
+                    p.Kill();
+                }
+            }
+
+            foreach (var p in sameAsOriginalSession)
+            {
+                if (Regex.Match(p.ProcessName, "^(UiPath\\..+)$").Success)
                 {
                     p.Kill();
                 }
@@ -217,6 +255,8 @@ namespace InactiveAssistantMonitor
         {
             try
             {
+                this.stopTimerInactiveProcess();
+                this.stopTimerOrchestratorConnectivity();
                 this.KillAssistant();
             }
             catch (Exception ex)
