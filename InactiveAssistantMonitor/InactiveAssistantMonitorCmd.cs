@@ -237,15 +237,29 @@ namespace InactiveAssistantMonitor
             {
                 if (p.ProcessName == "UiPath.Executor")
                 {
-                    p.Kill();
+                    try
+                    {
+                        p.Kill();
+                    }
+                    catch (Exception ex)
+                    {
+                        FileManager.Instance.Log("!! Exception for process : " + p.ProcessName + " : " + ex.Message);
+                    }
                 }
             }
 
             foreach (var p in sameAsOriginalSession)
             {
-                if (Regex.Match(p.ProcessName, "^(UiPath\\..+)$").Success)
+                if (Regex.Match(p.ProcessName, "^(UiPath\\..+)$").Success && p.ProcessName != "UiPath.Executor")
                 {
-                    p.Kill();
+                    try
+                    {
+                        p.Kill();
+                    }
+                    catch (Exception ex)
+                    {
+                        FileManager.Instance.Log("!! Exception for process : " + p.ProcessName + " : " + ex.Message);
+                    }
                 }
             }
             FileManager.Instance.Log("> Assistant Killed!");
