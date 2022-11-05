@@ -7,7 +7,8 @@ using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Timers;
-using System.Threading;
+using System.Runtime.InteropServices;
+using InactiveAssistantMonitor.Properties;
 
 namespace InactiveAssistantMonitor
 {
@@ -15,28 +16,52 @@ namespace InactiveAssistantMonitor
     {
         NotifyIcon notifyIcon = new NotifyIcon();
 
-        int countInactive;
         string studioPath;
+
+        public int PeriodIntervalConnectionToOrchestratorInSeconds;
+        public int PeriodIntervalActivityCheckInSeconds;
+        public int NumberOfIntervalsSessionActivityCheckUntilKill;
+        public int NumberOfIntervalsWithoutInputUntilKill;
+
+        public int countInactive;
 
         System.Timers.Timer timerOrchestratorConnectivity;
         System.Timers.Timer timerInactiveProcess;
 
+        private struct LASTINPUTINFO
+        {
+            public uint cbSize;
+            public uint dwTime;
+        }
+
+        [DllImport("user32.dll")]
+        static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
+
         public InactiveAssistantMonitorCmd()
         {
+            this.countInactive = 0;
+
             FileManager.Instance.Log("InactiveAssistantMonitorCmd started...");
 
             this.studioPath = "";
-            if (System.IO.Directory.Exists(Properties.Settings.Default.UiPathAssistantPathX86.Trim('\\')))
+            if (System.IO.File.Exists(Settings.Default.UiPathAssistantPathX86.Trim('\\') + "\\" +
+                                         Settings.Default.UiPathAssistantExe ))
             {
-                this.studioPath = Properties.Settings.Default.UiPathAssistantPathX86.Trim('\\');
+                this.studioPath = Settings.Default.UiPathAssistantPathX86.Trim('\\');
             }
             else
             {
-                if (System.IO.Directory.Exists(Properties.Settings.Default.UiPathAssistantPath.Trim('\\')))
+                if (System.IO.File.Exists(Settings.Default.UiPathAssistantPath.Trim('\\') + "\\" +
+                                         Settings.Default.UiPathAssistantExe ))
                 {
-                    this.studioPath = Properties.Settings.Default.UiPathAssistantPath.Trim('\\');
+                    this.studioPath = Settings.Default.UiPathAssistantPath.Trim('\\');
                 }
             }
+
+            this.PeriodIntervalConnectionToOrchestratorInSeconds = Settings.Default.PeriodIntervalConnectionToOrchestratorInSeconds;
+            this.PeriodIntervalActivityCheckInSeconds = Settings.Default.PeriodIntervalActivityCheckInSeconds;
+            this.NumberOfIntervalsSessionActivityCheckUntilKill = Settings.Default.NumberOfIntervalsSessionActivityCheckUntilKill;
+            this.NumberOfIntervalsWithoutInputUntilKill = Settings.Default.NumberOfIntervalsWithoutInputUntilKill;
 
             if (String.IsNullOrEmpty(this.studioPath))
             {
@@ -63,7 +88,7 @@ namespace InactiveAssistantMonitor
 
                 this.startTimerOrchestratorConnectivity();
 
-                notifyIcon.Icon = InactiveAssistantMonitor.Properties.Resources.AppIcon;
+                notifyIcon.Icon = Resources.AppIcon;
 
                 notifyIcon.DoubleClick += ShowMessageBoxEH;
                 notifyIcon.ContextMenu = new ContextMenu(new MenuItem[] {
@@ -76,9 +101,17 @@ namespace InactiveAssistantMonitor
             }
         }
 
+        private void SettingsEH(object sender, EventArgs e)
+        {
+            SettingsForm settingsForm = new SettingsForm(this);
+            settingsForm.numberOfIntervalsTextBox.Text = this.NumberOfIntervalsSessionActivityCheckUntilKill.ToString();
+            settingsForm.intervalTextBox.Text = this.PeriodIntervalActivityCheckInSeconds.ToString();
+            settingsForm.Show();
+        }
+
         private void startTimerOrchestratorConnectivity()
         {
-            this.timerOrchestratorConnectivity = new System.Timers.Timer(1000.0 * Properties.Settings.Default.PeriodIntervalConnectionToOrchestrator);
+            this.timerOrchestratorConnectivity = new System.Timers.Timer(1000.0 * this.PeriodIntervalConnectionToOrchestratorInSeconds);
             this.timerOrchestratorConnectivity.Elapsed += checkConnectivityToOrchestratorEH;
             this.timerOrchestratorConnectivity.AutoReset = true;
             var delayedStart = new System.Threading.Timer((e) =>
@@ -90,7 +123,7 @@ namespace InactiveAssistantMonitor
                 catch(Exception)
                 {
                 }
-            }, null, TimeSpan.FromSeconds(Properties.Settings.Default.OffsetChecks), TimeSpan.FromMilliseconds(-1));
+            }, null, TimeSpan.FromSeconds(Settings.Default.OffsetConnectionActivityChecksInSeconds), TimeSpan.FromMilliseconds(-1));
         }
 
         private void stopTimerOrchestratorConnectivity()
@@ -99,15 +132,15 @@ namespace InactiveAssistantMonitor
             this.timerOrchestratorConnectivity.Dispose();
         }
 
-        private void startTimerInactiveProcess()
+        public void startTimerInactiveProcess()
         {
-            this.timerInactiveProcess = new System.Timers.Timer(1000.0 * Properties.Settings.Default.PeriodIntervalInSeconds);
+            this.timerInactiveProcess = new System.Timers.Timer(1000.0 * this.PeriodIntervalActivityCheckInSeconds);
             this.timerInactiveProcess.Elapsed += CheckProcessRunnningEH;
             this.timerInactiveProcess.AutoReset = true;
             this.timerInactiveProcess.Start();
         }
 
-        private void stopTimerInactiveProcess()
+        public void stopTimerInactiveProcess()
         {
             this.timerInactiveProcess.Stop();
             this.timerInactiveProcess.Dispose();
@@ -134,11 +167,29 @@ namespace InactiveAssistantMonitor
                             {
                                 FileManager.Instance.Log("> Session active...");
 
-                                if (!this.IsAssistantOn())
+                                uint secondsSinceLastInput = GetLastInputTime();
+
+                                int maxSecondsInactiveBeforeKill = this.NumberOfIntervalsWithoutInputUntilKill * this.PeriodIntervalActivityCheckInSeconds;
+
+                                FileManager.Instance.Log("secondsSinceLastInput: " + secondsSinceLastInput.ToString() + " / " + maxSecondsInactiveBeforeKill.ToString());
+
+                                if (secondsSinceLastInput < maxSecondsInactiveBeforeKill)
                                 {
-                                    this.StartAssistant();
+                                    // session active with activity
+                                    if (!this.IsAssistantOn())
+                                    {
+                                        this.StartAssistant();
+                                    }
+                                    this.countInactive = 1;
                                 }
-                                this.countInactive = 1;
+                                else
+                                {
+                                    // session active without activity
+                                    if (this.IsAssistantOn())
+                                    {
+                                        this.KillAssistant();
+                                    }
+                                }
                             }
                             else
                             {
@@ -146,7 +197,7 @@ namespace InactiveAssistantMonitor
 
                                 if (this.IsAssistantOn())
                                 {
-                                    if (this.countInactive > Properties.Settings.Default.NumberOfIntervalsUntilKill)
+                                    if (this.countInactive > Settings.Default.NumberOfIntervalsSessionActivityCheckUntilKill)
                                     {
                                         this.KillAssistant();
                                     }
@@ -161,7 +212,25 @@ namespace InactiveAssistantMonitor
                     }
                 }
             }
+        }
 
+        static uint GetLastInputTime()
+        {
+            uint idleTime = 0;
+            LASTINPUTINFO lastInputInfo = new LASTINPUTINFO();
+            lastInputInfo.cbSize = (uint)Marshal.SizeOf(lastInputInfo);
+            lastInputInfo.dwTime = 0;
+
+            //Gets the number of milliseconds elapsed since the system started.
+            uint envTicks = (uint)Environment.TickCount;
+
+            if (GetLastInputInfo(ref lastInputInfo))
+            {
+                uint lastInputTick = lastInputInfo.dwTime;
+                idleTime = envTicks - lastInputTick;
+            }
+
+            return ((idleTime > 0) ? (idleTime / 1000) : 0); // in seconds
         }
 
         private void CheckProcessRunnningEH(object sender, EventArgs e)
@@ -184,8 +253,7 @@ namespace InactiveAssistantMonitor
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.CreateNoWindow = true;
 
-            process.StartInfo.FileName = this.studioPath + "\\" + 
-                                         Properties.Settings.Default.UiPathAssistantExe;
+            process.StartInfo.FileName = this.studioPath + "\\" + Settings.Default.UiPathAssistantExe;
 
             process.Start();
             FileManager.Instance.Log("> Assistant started!");
@@ -290,8 +358,7 @@ namespace InactiveAssistantMonitor
             disconnectProcess.StartInfo.UseShellExecute = false;
             disconnectProcess.StartInfo.CreateNoWindow = true;
 
-            disconnectProcess.StartInfo.FileName = this.studioPath + "\\" +
-                                         Properties.Settings.Default.UiPathRobot;
+            disconnectProcess.StartInfo.FileName = this.studioPath + "\\" + Settings.Default.UiPathRobot;
             disconnectProcess.StartInfo.Arguments = "disconnect";
 
             disconnectProcess.Start();
@@ -306,10 +373,10 @@ namespace InactiveAssistantMonitor
             connectProcess.StartInfo.CreateNoWindow = true;
 
             connectProcess.StartInfo.FileName = this.studioPath + "\\" +
-                                            Properties.Settings.Default.UiPathRobot;
+                                            Settings.Default.UiPathRobot;
             connectProcess.StartInfo.Arguments = "connect" +
-                                            " --url " + Properties.Settings.Default.OrchestratorUrl.Trim('/') +
-                                            " --key " + Properties.Settings.Default.MachineKey;
+                                            " --url " + Settings.Default.OrchestratorUrl.Trim('/') +
+                                            " --key " + Settings.Default.MachineKey;
 
             connectProcess.Start();
             connectProcess.WaitForExit();
@@ -319,7 +386,7 @@ namespace InactiveAssistantMonitor
 
         private bool hasConnectivityToOrchestrator()
         {
-            HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(Properties.Settings.Default.OrchestratorUrl.Trim('/') + "/api/Status/Get");
+            HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(Settings.Default.OrchestratorUrl.Trim('/') + "/api/Status/Get");
             request.Headers.Add("UserAgent", "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1)");
             request.AllowAutoRedirect = false;
 

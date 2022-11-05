@@ -26,24 +26,24 @@ namespace InactiveAssistantMonitor.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("30")]
-        public int PeriodIntervalInSeconds {
+        public int PeriodIntervalActivityCheckInSeconds {
             get {
-                return ((int)(this["PeriodIntervalInSeconds"]));
+                return ((int)(this["PeriodIntervalActivityCheckInSeconds"]));
             }
             set {
-                this["PeriodIntervalInSeconds"] = value;
+                this["PeriodIntervalActivityCheckInSeconds"] = value;
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("10")]
-        public int NumberOfIntervalsUntilKill {
+        [global::System.Configuration.DefaultSettingValueAttribute("4")]
+        public int NumberOfIntervalsSessionActivityCheckUntilKill {
             get {
-                return ((int)(this["NumberOfIntervalsUntilKill"]));
+                return ((int)(this["NumberOfIntervalsSessionActivityCheckUntilKill"]));
             }
             set {
-                this["NumberOfIntervalsUntilKill"] = value;
+                this["NumberOfIntervalsSessionActivityCheckUntilKill"] = value;
             }
         }
         
@@ -62,48 +62,24 @@ namespace InactiveAssistantMonitor.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("15")]
-        public int OffsetChecks {
+        public int OffsetConnectionActivityChecksInSeconds {
             get {
-                return ((int)(this["OffsetChecks"]));
+                return ((int)(this["OffsetConnectionActivityChecksInSeconds"]));
             }
             set {
-                this["OffsetChecks"] = value;
+                this["OffsetConnectionActivityChecksInSeconds"] = value;
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("30")]
-        public int PeriodIntervalConnectionToOrchestrator {
+        public int PeriodIntervalConnectionToOrchestratorInSeconds {
             get {
-                return ((int)(this["PeriodIntervalConnectionToOrchestrator"]));
+                return ((int)(this["PeriodIntervalConnectionToOrchestratorInSeconds"]));
             }
             set {
-                this["PeriodIntervalConnectionToOrchestrator"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("https://staging.uipath.com/benefittrackingdemo/DefaultTenant/orchestrator_/")]
-        public string OrchestratorUrl {
-            get {
-                return ((string)(this["OrchestratorUrl"]));
-            }
-            set {
-                this["OrchestratorUrl"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("5b6c6f95-6fac-402f-95bc-346db133887e")]
-        public string MachineKey {
-            get {
-                return ((string)(this["MachineKey"]));
-            }
-            set {
-                this["MachineKey"] = value;
+                this["PeriodIntervalConnectionToOrchestratorInSeconds"] = value;
             }
         }
         
@@ -140,6 +116,42 @@ namespace InactiveAssistantMonitor.Properties {
             }
             set {
                 this["UiPathAssistantPath"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://laptop-tcj7ugr2/")]
+        public string OrchestratorUrl {
+            get {
+                return ((string)(this["OrchestratorUrl"]));
+            }
+            set {
+                this["OrchestratorUrl"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("ea0481e9-7913-4c25-b4df-c1913e49d658")]
+        public string MachineKey {
+            get {
+                return ((string)(this["MachineKey"]));
+            }
+            set {
+                this["MachineKey"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("130")]
+        public int NumberOfIntervalsWithoutInputUntilKill {
+            get {
+                return ((int)(this["NumberOfIntervalsWithoutInputUntilKill"]));
+            }
+            set {
+                this["NumberOfIntervalsWithoutInputUntilKill"] = value;
             }
         }
     }

@@ -2,26 +2,20 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="InactiveAssistantMonitor.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
-    <Setting Name="PeriodIntervalInSeconds" Type="System.Int32" Scope="User">
+    <Setting Name="PeriodIntervalActivityCheckInSeconds" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">30</Value>
     </Setting>
-    <Setting Name="NumberOfIntervalsUntilKill" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">10</Value>
+    <Setting Name="NumberOfIntervalsSessionActivityCheckUntilKill" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">4</Value>
     </Setting>
     <Setting Name="UiPathAssistantPathX86" Type="System.String" Scope="User">
       <Value Profile="(Default)">C:\Program Files (x86)\UiPath\Studio\</Value>
     </Setting>
-    <Setting Name="OffsetChecks" Type="System.Int32" Scope="User">
+    <Setting Name="OffsetConnectionActivityChecksInSeconds" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">15</Value>
     </Setting>
-    <Setting Name="PeriodIntervalConnectionToOrchestrator" Type="System.Int32" Scope="User">
+    <Setting Name="PeriodIntervalConnectionToOrchestratorInSeconds" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">30</Value>
-    </Setting>
-    <Setting Name="OrchestratorUrl" Type="System.String" Scope="User">
-      <Value Profile="(Default)">https://staging.uipath.com/benefittrackingdemo/DefaultTenant/orchestrator_/</Value>
-    </Setting>
-    <Setting Name="MachineKey" Type="System.String" Scope="User">
-      <Value Profile="(Default)">5b6c6f95-6fac-402f-95bc-346db133887e</Value>
     </Setting>
     <Setting Name="UiPathAssistantExe" Type="System.String" Scope="User">
       <Value Profile="(Default)">UiPathAssistant\UiPath.Assistant.exe</Value>
@@ -31,6 +25,15 @@
     </Setting>
     <Setting Name="UiPathAssistantPath" Type="System.String" Scope="User">
       <Value Profile="(Default)">C:\Program Files\UiPath\Studio\</Value>
+    </Setting>
+    <Setting Name="OrchestratorUrl" Type="System.String" Scope="User">
+      <Value Profile="(Default)">https://laptop-tcj7ugr2/</Value>
+    </Setting>
+    <Setting Name="MachineKey" Type="System.String" Scope="User">
+      <Value Profile="(Default)">ea0481e9-7913-4c25-b4df-c1913e49d658</Value>
+    </Setting>
+    <Setting Name="NumberOfIntervalsWithoutInputUntilKill" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">130</Value>
     </Setting>
   </Settings>
 </SettingsFile>
