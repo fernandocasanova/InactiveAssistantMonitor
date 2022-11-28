@@ -33,8 +33,9 @@ namespace InactiveAssistantMonitor
                     return true;
                 }
 
-                var processes = myRobotClient.GetProcesses().Result;
                 FileManager.Instance.TouchLastOrchestratorCheckedFile();
+
+                var processes = myRobotClient.GetProcesses().Result;
 
                 if (processes.Count > 0)
                 {
