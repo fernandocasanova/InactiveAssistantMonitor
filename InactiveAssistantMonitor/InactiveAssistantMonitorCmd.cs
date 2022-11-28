@@ -165,13 +165,11 @@ namespace InactiveAssistantMonitor
                         {
                             if (session.ConnectionState == ConnectionState.Active)
                             {
-                                FileManager.Instance.Log("> Session active...");
-
                                 uint secondsSinceLastInput = GetLastInputTime();
 
                                 int maxSecondsInactiveBeforeKill = this.NumberOfIntervalsWithoutInputUntilKill * this.PeriodIntervalActivityCheckInSeconds;
 
-                                FileManager.Instance.Log("secondsSinceLastInput: " + secondsSinceLastInput.ToString() + " / " + maxSecondsInactiveBeforeKill.ToString());
+                                FileManager.Instance.Log("> Session active... secondsSinceLastInput: " + secondsSinceLastInput.ToString() + " / " + maxSecondsInactiveBeforeKill.ToString());
 
                                 if (secondsSinceLastInput < maxSecondsInactiveBeforeKill)
                                 {
@@ -414,11 +412,7 @@ namespace InactiveAssistantMonitor
             {
                 FileManager.Instance.Log("checkConnectivityToOrchestratorEH started... ");
 
-                if (RobotClientMgr.Instance.IsRobotConnectedToOrchestrator())
-                {
-                    FileManager.Instance.Log("> RobotConnectedToOrchestrator: True");
-                }
-                else
+                if (!RobotClientMgr.Instance.IsRobotConnectedToOrchestrator())
                 {
                     FileManager.Instance.Log("> RobotConnectedToOrchestrator: False");
 

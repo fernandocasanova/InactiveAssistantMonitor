@@ -25,10 +25,20 @@ namespace InactiveAssistantMonitor
         {
             try
             {
+                DateTime last_checked = FileManager.Instance.LastOrchestratorChecked();
+
+                if (last_checked >= DateTime.Now)
+                {
+                    FileManager.Instance.Log("> RobotConnectedToOrchestrator: True (no check until " + last_checked.ToString("s") + ")");
+                    return true;
+                }
+
                 var processes = myRobotClient.GetProcesses().Result;
+                FileManager.Instance.TouchLastOrchestratorCheckedFile();
 
                 if (processes.Count > 0)
                 {
+                    FileManager.Instance.Log("> RobotConnectedToOrchestrator: True");
                     return true;
                 }
             }

@@ -48,6 +48,60 @@ namespace InactiveAssistantMonitor
             }
         }
 
+        public DateTime LastOrchestratorChecked()
+        {
+            DateTime last = DateTime.MinValue;
+
+            try
+            {
+                if (File.Exists(this.GetStatusFilename()))
+                {
+                    string contents = File.ReadAllText(this.GetStatusFilename());
+
+                    DateTime output = DateTime.Parse(contents);
+
+                    return output;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                this.Log("Exception while reading StatusFilename: " + ex.Message);
+            }
+
+            return last;
+        }
+
+        public void TouchLastOrchestratorCheckedFile()
+        {
+            try
+            {
+                DateTime current_time = DateTime.Now;
+
+                DateTime tomorrow = current_time.Date.AddDays(1);
+
+                TimeSpan start = TimeSpan.FromHours(8);
+                TimeSpan end = TimeSpan.FromHours(16);
+                int maxSeconds = (int)((end - start).TotalSeconds);
+
+                Random random = new Random();
+                int randomSeconds = random.Next(maxSeconds);
+
+                TimeSpan t = start.Add(TimeSpan.FromSeconds(randomSeconds));
+
+                DateTime next_check = tomorrow + t;
+
+                File.WriteAllText(this.GetStatusFilename(), next_check.ToString("s"));
+
+                this.Log("Setting up orchestrator check in the future. Now: " + current_time.ToString("s") + " > Tomorrow: " + next_check.ToString("s"));
+            }
+            catch (Exception ex)
+            {
+                this.Log("Exception while writing StatusFilename: " + ex.Message);
+            }
+        }
+
+
         private void CleanLogFolder()
         {
             string[] aListOfFiles = Directory.GetFiles(this.GetLogFolder(), "*_InactiveAssistantMonitor.log");
@@ -72,6 +126,7 @@ namespace InactiveAssistantMonitor
                         try
                         {
                             File.Delete(aFile);
+                            this.Log("Deleted " + aFile);
                         }
                         catch (Exception ex)
                         {
@@ -106,6 +161,12 @@ namespace InactiveAssistantMonitor
         }
 
         private string GetStatusFilename()
+        {
+            var ds = Path.DirectorySeparatorChar;
+            return this.GetUiPathFolder() + ds + "InactiveAssistantMonitor.txt";
+        }
+
+        private string GetConfigFilename()
         {
             var ds = Path.DirectorySeparatorChar;
             return this.GetUiPathFolder() + ds + "InactiveAssistantMonitor.json";
