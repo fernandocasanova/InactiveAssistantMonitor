@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Windows.Forms;
 
 namespace InactiveAssistantMonitor
 {
@@ -24,7 +25,7 @@ namespace InactiveAssistantMonitor
                 File.WriteAllText(this.GetLogFilename(), "");
             }
 
-            this.Log("** Start of logging **");
+            this.Log("** Start of logging - Version: " + Application.ProductVersion + " **");
         }
 
         public void Log(string text)
