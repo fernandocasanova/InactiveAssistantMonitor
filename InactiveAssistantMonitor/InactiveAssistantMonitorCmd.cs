@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using System.Timers;
 using System.Runtime.InteropServices;
 using InactiveAssistantMonitor.Properties;
+using System.Threading;
 
 namespace InactiveAssistantMonitor
 {
@@ -36,6 +37,11 @@ namespace InactiveAssistantMonitor
 
         [DllImport("user32.dll")]
         static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
+
+        ~InactiveAssistantMonitorCmd()
+        {
+            this.Exit();
+        }
 
         public InactiveAssistantMonitorCmd()
         {
@@ -185,7 +191,7 @@ namespace InactiveAssistantMonitor
                                     // session active without activity
                                     if (this.IsAssistantOn())
                                     {
-                                        this.KillAssistant();
+                                        this.KillAssistant("No input or activity");
                                     }
                                 }
                             }
@@ -197,7 +203,7 @@ namespace InactiveAssistantMonitor
                                 {
                                     if (this.countInactive > Settings.Default.NumberOfIntervalsSessionActivityCheckUntilKill)
                                     {
-                                        this.KillAssistant();
+                                        this.KillAssistant("Session inactive");
                                     }
                                     else
                                     {
@@ -291,7 +297,7 @@ namespace InactiveAssistantMonitor
             return false;
         }
 
-        private void KillAssistant()
+        private void KillAssistant(string source = "")
         {
             Process[] runningProcesses = Process.GetProcesses();
             Process thisProcess = Process.GetCurrentProcess();
@@ -328,7 +334,7 @@ namespace InactiveAssistantMonitor
                     }
                 }
             }
-            FileManager.Instance.Log("> Assistant Killed!");
+            FileManager.Instance.Log("> Assistant Killed! " + source);
         }
 
         private void KillAssistantEH(object sender, EventArgs e)
@@ -337,7 +343,7 @@ namespace InactiveAssistantMonitor
             {
                 this.stopTimerInactiveProcess();
                 this.stopTimerOrchestratorConnectivity();
-                this.KillAssistant();
+                this.KillAssistant("User pressed button");
             }
             catch (Exception ex)
             {
@@ -382,46 +388,33 @@ namespace InactiveAssistantMonitor
             FileManager.Instance.Log("> Robot connected!");
         }
 
-        private bool hasConnectivityToOrchestrator()
+        private void checkConnectivityToOrchestratorEH(object sender, ElapsedEventArgs e)
         {
-            HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(Settings.Default.OrchestratorUrl.Trim('/') + "/api/Status/Get");
-            request.Headers.Add("UserAgent", "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1)");
-            request.AllowAutoRedirect = false;
-
-            try
-            {
-                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-
-                if (response.StatusCode == HttpStatusCode.OK)
-                {
-                    FileManager.Instance.Log("> Connectivity OK + Can connect to the Orchestrator");
-                    return true;
-                }
-            }
-            catch (Exception e)
-            {
-            }
-
-            FileManager.Instance.Log("> Connectivity KO - Cannot connect to the Orchestrator");
-            return false;
+            this.checkConnectivityToOrchestrator();
         }
 
-        private void checkConnectivityToOrchestratorEH(object sender, ElapsedEventArgs e)
+        private void checkConnectivityToOrchestrator(bool force_connection = false)
         {
             try
             {
                 FileManager.Instance.Log("checkConnectivityToOrchestratorEH started... ");
 
-                if (!RobotClientMgr.Instance.IsRobotConnectedToOrchestrator())
+                if (!RobotClientMgr.Instance.IsRobotConnectedToOrchestrator(force_connection))
                 {
                     FileManager.Instance.Log("> RobotConnectedToOrchestrator: False");
 
-                    if (this.hasConnectivityToOrchestrator())
+                    if (RobotClientMgr.Instance.hasConnectivityToOrchestrator())
                     {
                         this.DisconnectAndConnectRobot();
+
+                        Thread.Sleep(1000);
+
+                        if (!RobotClientMgr.Instance.IsRobotConnectedToOrchestrator(force_connection, true))
+                        {
+                            FileManager.Instance.Log("> RobotConnectedToOrchestrator: False - Second and last attempt");
+                        }
                     }
                 }
-
             }
             catch (Exception ex)
             {
@@ -433,7 +426,8 @@ namespace InactiveAssistantMonitor
         {
             try
             {
-                this.DisconnectAndConnectRobot();
+                FileManager.Instance.Log("Force Connection to Assistant");
+                this.checkConnectivityToOrchestrator(true);
             }
             catch(Exception ex)
             {
@@ -452,6 +446,17 @@ namespace InactiveAssistantMonitor
             // We must manually tidy up and remove the icon before we exit.
             // Otherwise it will be left behind until the user mouses over.
             notifyIcon.Visible = false;
+
+            try
+            {
+                this.stopTimerInactiveProcess();
+                this.stopTimerOrchestratorConnectivity();
+                this.KillAssistant("Shutting down");
+            }
+            catch (Exception ex)
+            {
+                FileManager.Instance.Log("!! Exception: " + ex.Message);
+            }
 
             Application.Exit();
         }
