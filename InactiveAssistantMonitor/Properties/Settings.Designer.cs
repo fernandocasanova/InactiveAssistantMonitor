@@ -12,7 +12,7 @@ namespace InactiveAssistantMonitor.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.3.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.8.0.0")]
     internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
@@ -61,30 +61,6 @@ namespace InactiveAssistantMonitor.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("15")]
-        public int OffsetConnectionActivityChecksInSeconds {
-            get {
-                return ((int)(this["OffsetConnectionActivityChecksInSeconds"]));
-            }
-            set {
-                this["OffsetConnectionActivityChecksInSeconds"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("30")]
-        public int PeriodIntervalConnectionToOrchestratorInSeconds {
-            get {
-                return ((int)(this["PeriodIntervalConnectionToOrchestratorInSeconds"]));
-            }
-            set {
-                this["PeriodIntervalConnectionToOrchestratorInSeconds"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("UiPathAssistant\\UiPath.Assistant.exe")]
         public string UiPathAssistantExe {
             get {
@@ -121,7 +97,7 @@ namespace InactiveAssistantMonitor.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("https://laptop-tcj7ugr2/")]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://laptop-fq7ihb0c/")]
         public string OrchestratorUrl {
             get {
                 return ((string)(this["OrchestratorUrl"]));
@@ -133,7 +109,7 @@ namespace InactiveAssistantMonitor.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("ea0481e9-7913-4c25-b4df-c1913e49d658")]
+        [global::System.Configuration.DefaultSettingValueAttribute("8080e263-2994-450d-aed4-498b7a78067d")]
         public string MachineKey {
             get {
                 return ((string)(this["MachineKey"]));
@@ -152,6 +128,18 @@ namespace InactiveAssistantMonitor.Properties {
             }
             set {
                 this["NumberOfIntervalsWithoutInputUntilKill"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("45")]
+        public int PeriodIntervalDelayedCheckOrchestrator {
+            get {
+                return ((int)(this["PeriodIntervalDelayedCheckOrchestrator"]));
+            }
+            set {
+                this["PeriodIntervalDelayedCheckOrchestrator"] = value;
             }
         }
     }

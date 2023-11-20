@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("UiPath")]
 [assembly: AssemblyProduct("InactiveAssistantMonitor")]
-[assembly: AssemblyCopyright("Copyright © UiPath 2021-2022")]
+[assembly: AssemblyCopyright("Copyright © UiPath 2021-2024")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

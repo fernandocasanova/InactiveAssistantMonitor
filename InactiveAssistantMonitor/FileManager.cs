@@ -1,5 +1,8 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Security.Principal;
 using System.Windows.Forms;
 
 namespace InactiveAssistantMonitor
@@ -23,6 +26,11 @@ namespace InactiveAssistantMonitor
             if (!File.Exists(this.GetLogFilename()))
             {
                 File.WriteAllText(this.GetLogFilename(), "");
+            }
+
+            if (!File.Exists(this.GetStatusFilename()))
+            {
+                File.WriteAllText(this.GetStatusFilename(), "");
             }
 
             this.Log("** Start of logging - Version: " + Application.ProductVersion + " **");
@@ -59,9 +67,13 @@ namespace InactiveAssistantMonitor
                 {
                     string contents = File.ReadAllText(this.GetStatusFilename());
 
-                    DateTime output = DateTime.Parse(contents);
+                    Dictionary<string, string> decoded_contents = JsonConvert.DeserializeObject<Dictionary<string, string>>(contents);
 
-                    return output;
+                    if (decoded_contents["version"] == Application.ProductVersion)
+                    {
+                        DateTime output = DateTime.Parse(decoded_contents["next_check"]);
+                        return output;
+                    }
                 }
 
             }
@@ -73,13 +85,13 @@ namespace InactiveAssistantMonitor
             return last;
         }
 
-        public void TouchLastOrchestratorCheckedFile()
+        public void TouchLastOrchestratorCheckedFile(int number_of_days)
         {
             try
             {
                 DateTime current_time = DateTime.Now;
 
-                DateTime tomorrow = current_time.Date.AddDays(1);
+                DateTime new_date = current_time.Date.AddDays(number_of_days);
 
                 TimeSpan start = TimeSpan.FromHours(8);
                 TimeSpan end = TimeSpan.FromHours(16);
@@ -90,9 +102,15 @@ namespace InactiveAssistantMonitor
 
                 TimeSpan t = start.Add(TimeSpan.FromSeconds(randomSeconds));
 
-                DateTime next_check = tomorrow + t;
+                DateTime next_check = new_date + t;
 
-                File.WriteAllText(this.GetStatusFilename(), next_check.ToString("s"));
+                Dictionary<string, string> encoded_contents = new Dictionary<string, string>();
+                encoded_contents["version"] = Application.ProductVersion;
+                encoded_contents["next_check"] = next_check.ToString("s");
+
+                string serialized_text = JsonConvert.SerializeObject(encoded_contents);
+
+                File.WriteAllText(this.GetStatusFilename(), serialized_text);
 
                 this.Log("Setting up orchestrator check in the future. Now: " + current_time.ToString("s") + " > Tomorrow: " + next_check.ToString("s"));
             }
@@ -109,7 +127,7 @@ namespace InactiveAssistantMonitor
             Array.Sort(aListOfFiles);
             Array.Reverse(aListOfFiles);
 
-            int keep = 2; // keep + 1 for today
+            int keep = 6; // days to keep + 1 for today
 
             foreach (var aFile in aListOfFiles)
             {

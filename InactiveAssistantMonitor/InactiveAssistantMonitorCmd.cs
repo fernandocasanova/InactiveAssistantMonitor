@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using System.Timers;
 using System.Runtime.InteropServices;
 using InactiveAssistantMonitor.Properties;
+using System.Threading;
 
 namespace InactiveAssistantMonitor
 {
@@ -18,14 +19,13 @@ namespace InactiveAssistantMonitor
 
         string studioPath;
 
-        public int PeriodIntervalConnectionToOrchestratorInSeconds;
+        public int PeriodIntervalDelayedCheckOrchestrator;
         public int PeriodIntervalActivityCheckInSeconds;
         public int NumberOfIntervalsSessionActivityCheckUntilKill;
         public int NumberOfIntervalsWithoutInputUntilKill;
 
         public int countInactive;
 
-        System.Timers.Timer timerOrchestratorConnectivity;
         System.Timers.Timer timerInactiveProcess;
 
         private struct LASTINPUTINFO
@@ -36,6 +36,11 @@ namespace InactiveAssistantMonitor
 
         [DllImport("user32.dll")]
         static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
+
+        ~InactiveAssistantMonitorCmd()
+        {
+            this.Exit();
+        }
 
         public InactiveAssistantMonitorCmd()
         {
@@ -58,8 +63,8 @@ namespace InactiveAssistantMonitor
                 }
             }
 
-            this.PeriodIntervalConnectionToOrchestratorInSeconds = Settings.Default.PeriodIntervalConnectionToOrchestratorInSeconds;
             this.PeriodIntervalActivityCheckInSeconds = Settings.Default.PeriodIntervalActivityCheckInSeconds;
+            this.PeriodIntervalDelayedCheckOrchestrator = Settings.Default.PeriodIntervalDelayedCheckOrchestrator;
             this.NumberOfIntervalsSessionActivityCheckUntilKill = Settings.Default.NumberOfIntervalsSessionActivityCheckUntilKill;
             this.NumberOfIntervalsWithoutInputUntilKill = Settings.Default.NumberOfIntervalsWithoutInputUntilKill;
 
@@ -86,9 +91,12 @@ namespace InactiveAssistantMonitor
 
                 this.startTimerInactiveProcess();
 
-                this.startTimerOrchestratorConnectivity();
-
                 notifyIcon.Icon = Resources.AppIcon;
+
+                var delayedCheckOfOrchestrator = new System.Threading.Timer((e) =>
+                {
+                    this.checkConnectivityToOrchestrator();
+                }, null, TimeSpan.FromSeconds(this.PeriodIntervalDelayedCheckOrchestrator), TimeSpan.FromMilliseconds(-1));
 
                 notifyIcon.DoubleClick += ShowMessageBoxEH;
                 notifyIcon.ContextMenu = new ContextMenu(new MenuItem[] {
@@ -101,39 +109,13 @@ namespace InactiveAssistantMonitor
             }
         }
 
-        private void SettingsEH(object sender, EventArgs e)
-        {
-            SettingsForm settingsForm = new SettingsForm(this);
-            settingsForm.numberOfIntervalsTextBox.Text = this.NumberOfIntervalsSessionActivityCheckUntilKill.ToString();
-            settingsForm.intervalTextBox.Text = this.PeriodIntervalActivityCheckInSeconds.ToString();
-            settingsForm.Show();
-        }
-
-        private void startTimerOrchestratorConnectivity()
-        {
-            this.timerOrchestratorConnectivity = new System.Timers.Timer(1000.0 * this.PeriodIntervalConnectionToOrchestratorInSeconds);
-            this.timerOrchestratorConnectivity.Elapsed += checkConnectivityToOrchestratorEH;
-            this.timerOrchestratorConnectivity.AutoReset = true;
-            var delayedStart = new System.Threading.Timer((e) =>
-            {
-                try
-                {
-                    this.timerOrchestratorConnectivity.Start();
-                }
-                catch(Exception)
-                {
-                }
-            }, null, TimeSpan.FromSeconds(Settings.Default.OffsetConnectionActivityChecksInSeconds), TimeSpan.FromMilliseconds(-1));
-        }
-
-        private void stopTimerOrchestratorConnectivity()
-        {
-            this.timerOrchestratorConnectivity.Stop();
-            this.timerOrchestratorConnectivity.Dispose();
-        }
-
         public void startTimerInactiveProcess()
         {
+            if (this.timerInactiveProcess != null)
+            {
+                this.timerInactiveProcess.Stop();
+                this.timerInactiveProcess.Dispose();
+            }
             this.timerInactiveProcess = new System.Timers.Timer(1000.0 * this.PeriodIntervalActivityCheckInSeconds);
             this.timerInactiveProcess.Elapsed += CheckProcessRunnningEH;
             this.timerInactiveProcess.AutoReset = true;
@@ -185,7 +167,7 @@ namespace InactiveAssistantMonitor
                                     // session active without activity
                                     if (this.IsAssistantOn())
                                     {
-                                        this.KillAssistant();
+                                        this.KillAssistant("No input or activity");
                                     }
                                 }
                             }
@@ -197,7 +179,7 @@ namespace InactiveAssistantMonitor
                                 {
                                     if (this.countInactive > Settings.Default.NumberOfIntervalsSessionActivityCheckUntilKill)
                                     {
-                                        this.KillAssistant();
+                                        this.KillAssistant("Session inactive");
                                     }
                                     else
                                     {
@@ -263,7 +245,6 @@ namespace InactiveAssistantMonitor
             {
                 this.StartAssistant();
                 this.startTimerInactiveProcess();
-                this.startTimerOrchestratorConnectivity();
             }
             catch(Exception ex)
             {
@@ -291,7 +272,7 @@ namespace InactiveAssistantMonitor
             return false;
         }
 
-        private void KillAssistant()
+        private void KillAssistant(string source = "")
         {
             Process[] runningProcesses = Process.GetProcesses();
             Process thisProcess = Process.GetCurrentProcess();
@@ -328,7 +309,7 @@ namespace InactiveAssistantMonitor
                     }
                 }
             }
-            FileManager.Instance.Log("> Assistant Killed!");
+            FileManager.Instance.Log("> Assistant Killed! " + source);
         }
 
         private void KillAssistantEH(object sender, EventArgs e)
@@ -336,8 +317,7 @@ namespace InactiveAssistantMonitor
             try
             {
                 this.stopTimerInactiveProcess();
-                this.stopTimerOrchestratorConnectivity();
-                this.KillAssistant();
+                this.KillAssistant("User pressed button");
             }
             catch (Exception ex)
             {
@@ -382,46 +362,28 @@ namespace InactiveAssistantMonitor
             FileManager.Instance.Log("> Robot connected!");
         }
 
-        private bool hasConnectivityToOrchestrator()
-        {
-            HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(Settings.Default.OrchestratorUrl.Trim('/') + "/api/Status/Get");
-            request.Headers.Add("UserAgent", "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1)");
-            request.AllowAutoRedirect = false;
-
-            try
-            {
-                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-
-                if (response.StatusCode == HttpStatusCode.OK)
-                {
-                    FileManager.Instance.Log("> Connectivity OK + Can connect to the Orchestrator");
-                    return true;
-                }
-            }
-            catch (Exception e)
-            {
-            }
-
-            FileManager.Instance.Log("> Connectivity KO - Cannot connect to the Orchestrator");
-            return false;
-        }
-
-        private void checkConnectivityToOrchestratorEH(object sender, ElapsedEventArgs e)
+        private void checkConnectivityToOrchestrator(bool force_connection = false)
         {
             try
             {
                 FileManager.Instance.Log("checkConnectivityToOrchestratorEH started... ");
 
-                if (!RobotClientMgr.Instance.IsRobotConnectedToOrchestrator())
+                if (!RobotClientMgr.Instance.IsRobotConnectedToOrchestrator(force_connection))
                 {
                     FileManager.Instance.Log("> RobotConnectedToOrchestrator: False");
 
-                    if (this.hasConnectivityToOrchestrator())
+                    if (RobotClientMgr.Instance.hasConnectivityToOrchestrator())
                     {
                         this.DisconnectAndConnectRobot();
+
+                        Thread.Sleep(2000);
+
+                        if (!RobotClientMgr.Instance.IsRobotConnectedToOrchestrator(force_connection, true))
+                        {
+                            FileManager.Instance.Log("> RobotConnectedToOrchestrator: False - Second and last attempt");
+                        }
                     }
                 }
-
             }
             catch (Exception ex)
             {
@@ -433,7 +395,8 @@ namespace InactiveAssistantMonitor
         {
             try
             {
-                this.DisconnectAndConnectRobot();
+                FileManager.Instance.Log("Force Connection to Assistant");
+                this.checkConnectivityToOrchestrator(true);
             }
             catch(Exception ex)
             {
@@ -452,6 +415,16 @@ namespace InactiveAssistantMonitor
             // We must manually tidy up and remove the icon before we exit.
             // Otherwise it will be left behind until the user mouses over.
             notifyIcon.Visible = false;
+
+            try
+            {
+                this.stopTimerInactiveProcess();
+                this.KillAssistant("Shutting down");
+            }
+            catch (Exception ex)
+            {
+                FileManager.Instance.Log("!! Exception: " + ex.Message);
+            }
 
             Application.Exit();
         }
