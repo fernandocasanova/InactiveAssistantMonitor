@@ -11,12 +11,6 @@
     <Setting Name="UiPathAssistantPathX86" Type="System.String" Scope="User">
       <Value Profile="(Default)">C:\Program Files (x86)\UiPath\Studio\</Value>
     </Setting>
-    <Setting Name="OffsetConnectionActivityChecksInSeconds" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">15</Value>
-    </Setting>
-    <Setting Name="PeriodIntervalConnectionToOrchestratorInSeconds" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">30</Value>
-    </Setting>
     <Setting Name="UiPathAssistantExe" Type="System.String" Scope="User">
       <Value Profile="(Default)">UiPathAssistant\UiPath.Assistant.exe</Value>
     </Setting>
@@ -27,13 +21,16 @@
       <Value Profile="(Default)">C:\Program Files\UiPath\Studio\</Value>
     </Setting>
     <Setting Name="OrchestratorUrl" Type="System.String" Scope="User">
-      <Value Profile="(Default)">https://laptop-tcj7ugr2/</Value>
+      <Value Profile="(Default)">https://laptop-fq7ihb0c/</Value>
     </Setting>
     <Setting Name="MachineKey" Type="System.String" Scope="User">
-      <Value Profile="(Default)">ea0481e9-7913-4c25-b4df-c1913e49d658</Value>
+      <Value Profile="(Default)">8080e263-2994-450d-aed4-498b7a78067d</Value>
     </Setting>
     <Setting Name="NumberOfIntervalsWithoutInputUntilKill" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">130</Value>
+    </Setting>
+    <Setting Name="PeriodIntervalDelayedCheckOrchestrator" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">45</Value>
     </Setting>
   </Settings>
 </SettingsFile>

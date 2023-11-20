@@ -28,6 +28,11 @@ namespace InactiveAssistantMonitor
                 File.WriteAllText(this.GetLogFilename(), "");
             }
 
+            if (!File.Exists(this.GetStatusFilename()))
+            {
+                File.WriteAllText(this.GetStatusFilename(), "");
+            }
+
             this.Log("** Start of logging - Version: " + Application.ProductVersion + " **");
         }
 

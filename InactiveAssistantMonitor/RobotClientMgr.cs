@@ -50,13 +50,13 @@ namespace InactiveAssistantMonitor
 
         public bool IsRobotConnectedToOrchestrator(bool force_connection = false, bool verbose = false)
         {
-            DateTime last_checked = FileManager.Instance.LastOrchestratorChecked();
+            DateTime next_check_time = FileManager.Instance.LastOrchestratorChecked();
 
             if (!force_connection)
             {
-                if (last_checked >= DateTime.Now)
+                if (next_check_time >= DateTime.Now)
                 {
-                    FileManager.Instance.Log("> RobotConnectedToOrchestrator: True (no check until " + last_checked.ToString("s") + ")");
+                    FileManager.Instance.Log("> RobotConnectedToOrchestrator: True (no check until " + next_check_time.ToString("s") + ")");
                     return true;
                 }
             }
